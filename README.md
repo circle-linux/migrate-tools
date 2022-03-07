@@ -1,6 +1,6 @@
 # circlelinux-deploy
 
-An EL to CircleLinux migration tool.
+An EL to CircleLinux migration tool ,port from almalinux-deploy.
 
 
 ## Usage
@@ -38,7 +38,7 @@ convenience to restore `dnf` to a functional state that will let you update to 8
 3. Download the [circlelinux-deploy.sh](circlelinux-deploy.sh) script:
 
    ```shell
-   $ curl -O https://raw.githubusercontent.com/CircleLinux/circlelinux-deploy/master/circlelinux-deploy.sh
+   $ curl -O https://raw.githubusercontent.com/circle-linux/migrate-tools/master/circlelinux-deploy.sh
    ```
 
 4. Run the script and check its output for errors:
@@ -60,14 +60,14 @@ convenience to restore `dnf` to a functional state that will let you update to 8
    ```shell
    # check release file
    $ cat /etc/redhat-release
-   CircleLinux release 8.5 (Arctic Sphynx)
+   Circle Linux release 8.5 
 
    # check that the system boots CircleLinux kernel by default
-   $ sudo grubby --info DEFAULT | grep CircleLinux
-   title="CircleLinux (4.18.0-348.el8.x86_64) 8.5 (Arctic Sphynx)"
+   $ sudo grubby --info DEFAULT | grep "Circle Linux"
+   title="Circle Linux (4.18.0-348.20.1.el8_5.x86_64) 8"
    ```
 
-7. Thank you for choosing CircleLinux!
+7. Thank you for choosing Circle Linux!
 
 
 ## Roadmap
@@ -88,10 +88,10 @@ convenience to restore `dnf` to a functional state that will let you update to 8
 
 Any contribution is welcome:
 
-* Find and [report](https://github.com/CircleLinux/circlelinux-deploy/issues) bugs.
+* Find and [report](https://github.com/circle-linux/migrate-tools/issues) bugs.
 * Submit pull requests with bug fixes, improvements and new tests.
 * Test it on different configurations and share your thoughts in
-  [discussions](https://github.com/CircleLinux/circlelinux-deploy/discussions).
+  [discussions](https://github.com/circle-linux/migrate-tools/discussions).
 
 Technology stack:
 

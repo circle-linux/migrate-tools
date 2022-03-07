@@ -1,7 +1,7 @@
 import pytest
 
-ALMA_BRANDED_PACKAGES = ['almalinux-backgrounds', 'almalinux-logos',
-                         'almalinux-indexhtml']
+ALMA_BRANDED_PACKAGES = ['crcle-backgrounds', 'circle-logos',
+                         'circle-indexhtml']
 
 CENTOS_BRANDED_PACKAGES = ['centos-backgrounds', 'centos-logos',
                            'centos-indexhtml']

@@ -1,0 +1,8 @@
+---
+- name: Upload circlelinux-deploy.sh
+  copy:
+    src: circlelinux-deploy.sh
+    dest: /tmp/circlelinux-deploy.sh
+    owner: root
+    group: root
+    mode: '0700'

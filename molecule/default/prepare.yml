@@ -3,5 +3,5 @@
   hosts: all
   become: true
   roles:
-    - upload_almalinux_deploy
+    - upload_circlelinux_deploy
     - upgrade_and_reboot
