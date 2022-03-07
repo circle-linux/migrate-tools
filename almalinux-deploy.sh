@@ -1,22 +1,23 @@
 #!/bin/bash
 
-# Description: EL to AlmaLinux migration script.
+# Description: EL to CircleLinux migration script.
 # License: GPLv3.
 # Environment variables:
-#   ALMA_RELEASE_URL - almalinux-release package download URL.
-#   ALMA_PUBKEY_URL - RPM-GPG-KEY-AlmaLinux download URL.
+#   CIRCLE_RELEASE_URL - circle-linux-release package download URL.
+#   CIRCLE_REPOS_URL - circle-linux-repos package download URL.
+#   CIRCLE_PUBKEY_URL - RPM-GPG-KEY-circleofficial download URL.
 
 set -euo pipefail
 
 BASE_TMP_DIR='/root'
 OS_RELEASE_PATH='/etc/os-release'
 REDHAT_RELEASE_PATH='/etc/redhat-release'
-STAGE_STATUSES_DIR='/var/run/almalinux-deploy-statuses'
+STAGE_STATUSES_DIR='/var/run/circlelinux-deploy-statuses'
 ALT_ADM_DIR="/var/lib/alternatives"
 BAK_DIR="/tmp/alternatives_backup"
 ALT_DIR="/etc/alternatives"
 
-# AlmaLinux OS 8.5
+# CircleLinux OS 8.5
 MINIMAL_SUPPORTED_VERSION='8.4'
 VERSION='0.1.12'
 
@@ -43,8 +44,8 @@ module_list_installed=""
 is_container=0
 
 setup_log_files() {
-    exec > >(tee /var/log/almalinux-deploy.log)
-    exec 5> /var/log/almalinux-deploy.debug.log
+    exec > >(tee /var/log/circlelinux-deploy.log)
+    exec 5> /var/log/circlelinux-deploy.debug.log
     BASH_XTRACEFD=5
 }
 
@@ -85,7 +86,7 @@ get_status_of_stage() {
 
 is_migration_completed() {
     if get_status_of_stage "completed"; then
-        printf '\n\033[0;32mMigration to AlmaLinux was already completed\033[0m\n'
+        printf '\n\033[0;32mMigration to CircleLinux was already completed\033[0m\n'
         exit 0
     fi
 }
@@ -116,8 +117,8 @@ report_step_error() {
 
 # Prints program usage information.
 show_usage() {
-    echo -e 'Migrates an EL system to AlmaLinux\n'
-    echo -e 'Usage: almalinux-deploy.sh [OPTION]...\n'
+    echo -e 'Migrates an EL system to CircleLinux\n'
+    echo -e 'Usage: migrate2circle.sh [OPTION]...\n'
     echo '  -h, --help           show this message and exit'
     echo '  -f, --full           perform yum upgrade to 8.5 if necessary'
     echo '  -v, --version        print version information and exit'
@@ -198,7 +199,7 @@ get_panel_info() {
     echo "${panel_type} ${panel_version}"
 }
 
-# Terminates the program if a platform is not supported by AlmaLinux.
+# Terminates the program if a platform is not supported by CircleLinux.
 #
 # $1 - Operational system id (ID).
 # $2 - Operational system version (e.g. 8 or 8.3).
@@ -222,7 +223,7 @@ assert_supported_system() {
         report_step_error "Check EL${os_version} is supported"
         exit 1
     fi
-    os_types=("centos" "almalinux" "ol" "rhel" "rocky")
+    os_types=("centos" "almalinux" "circle" "ol" "rhel" "rocky")
     if [[ ! " ${os_types[*]} " =~ ${os_type} ]]; then
         report_step_error "Check ${os_type} operating system is supported"
         exit 1
@@ -232,7 +233,7 @@ assert_supported_system() {
     return 0
 }
 
-# Terminates the program if a control panel is not supported by AlmaLinux.
+# Terminates the program if a control panel is not supported by CircleLinux.
 #
 # $1 - Control panel type.
 # $2 - Control panel version.
@@ -286,19 +287,25 @@ assert_supported_filesystem() {
     save_status_of_stage "assert_supported_filesystem"
 }
 
-# Returns a latest almalinux-release RPM package download URL.
+# Returns a latest circle-linux-release RPM package download URL.
 #
-# $1 - AlmaLinux major version (e.g. 8).
+# $1 - CircleLinux major version (e.g. 8).
 # $2 - System architecture (e.g. x86_64).
 #
-# Prints almalinux-release RPM package download URL.
+# Prints circle-linux-release RPM package download URL.
 get_release_file_url() {
     local -r os_version="${1:0:1}"
     local -r arch="${2}"
-    echo "${ALMA_RELEASE_URL:-https://repo.almalinux.org/almalinux/almalinux-release-latest-${os_version}.${arch}.rpm}"
+    echo "${CIRCLE_RELEASE_URL:-https://mirror.cclinux.org/pub/circle/8/BaseOS/x86_64/os/Packages/circle-linux-release-8.5-1.el8.noarch.rpm}"
 }
 
-# Downloads and installs the AlmaLinux public PGP key.
+get_repos_file_url() {
+    local -r os_version="${1:0:1}"
+    local -r arch="${2}"
+    echo "${CIRCLE_REPOS_URL:-https://mirror.cclinux.org/pub/circle/8/BaseOS/x86_64/os/Packages/circle-linux-repos-8-7.el8.noarch.rpm}"
+}
+
+# Downloads and installs the CircleLinux public GPG key.
 #
 # $1 - Temporary directory path.
 install_rpm_pubkey() {
@@ -306,9 +313,9 @@ install_rpm_pubkey() {
         return 0
     fi
     local -r tmp_dir="${1}"
-    local -r pubkey_url="${ALMA_PUBKEY_URL:-https://repo.almalinux.org/almalinux/RPM-GPG-KEY-AlmaLinux}"
-    local -r pubkey_path="${tmp_dir}/RPM-GPG-KEY-AlmaLinux"
-    local -r step='Download RPM-GPG-KEY-AlmaLinux'
+    local -r pubkey_url="${CIRCLE_PUBKEY_URL:-https://mirror.cclinux.org/pub/circle/8/metadata/RPM-GPG-KEY-circleofficial}"
+    local -r pubkey_path="${tmp_dir}/RPM-GPG-KEY-circleofficial"
+    local -r step='Download RPM-GPG-KEY-circleofficial'
     local output
     if ! output=$(curl -f -s -S -o "${pubkey_path}" "${pubkey_url}" 2>&1); then
         report_step_error "${step}" "${output}"
@@ -317,29 +324,40 @@ install_rpm_pubkey() {
         report_step_done "${step}"
     fi
     rpm --import "${pubkey_path}"
-    report_step_done 'Import RPM-GPG-KEY-AlmaLinux to RPM DB'
+    report_step_done 'Import RPM-GPG-KEY-circleofficial to RPM DB'
     rm -f "${pubkey_path}"
     save_status_of_stage "install_rpm_pubkey"
 }
 
-# Downloads almalinux-release package.
+# Downloads circle-linux-release package.
 #
-# $1 - almalinux-release package download URL.
+# $1 - circle-linux-release package download URL.
 # $2 - Temporary directory path.
 #
 # Prints downloaded file path.
 download_release_file() {
     local -r release_url="${1}"
     local -r tmp_dir="${2}"
-    local -r release_path="${tmp_dir}/almalinux-release-latest.rpm"
+    local -r release_path="${tmp_dir}/circle-linux-release-latest.rpm"
     local output
     if ! output=$(curl -f -s -S -o "${release_path}" "${release_url}" 2>&1); then
-        report_step_error 'Download almalinux-release package' "${output}"
+        report_step_error 'Download circle-linux-release package' "${output}"
         exit 1
     fi
     echo "${release_path}"
 }
 
+download_repos_file() {
+    local -r repos_url="${1}"
+    local -r tmp_dir="${2}"
+    local -r repos_path="${tmp_dir}/circle-linux-repos-latest.rpm"
+    local output
+    if ! output=$(curl -f -s -S -o "${repos_path}" "${repos_url}" 2>&1); then
+        report_step_error 'Download circle-linux-repos package' "${output}"
+        exit 1
+    fi
+    echo "${repos_path}"
+}
 # Terminates the program if a given RPM package checksum/signature is invalid.
 #
 # $1 - RPM package path.
@@ -351,7 +369,7 @@ assert_valid_package() {
             "${output}"
         exit 1
     fi
-    report_step_done 'Verify almalinux-release package'
+    report_step_done 'Verify circle-linux-release package'
 }
 
 #
@@ -380,25 +398,25 @@ dnf_upgrade() {
     report_step_done 'DNF upgrade'
 }
 
-# Terminates the program if OS version doesn't match AlmaLinux version.
+# Terminates the program if OS version doesn't match CircleLinux version.
 #
 # $1 - OS version.
-# $2 - almalinux-release package file path.
+# $2 - circle-linux-release package file path.
 assert_compatible_os_version() {
     if get_status_of_stage "assert_compatible_os_version"; then
         return 0
     fi
     local -r os_version="${1}"
     local -r release_path="${2}"
-    local alma_version
-    alma_version=$(rpm -qp --queryformat '%{version}' "${release_path}")
+    local circle_version
+    circle_version=$(rpm -qp --queryformat '%{version}' "${release_path}")
 
     if [[ "${os_version:2:3}" -lt "${MINIMAL_SUPPORTED_VERSION:2:3}" ]]; then
         report_step_error "Please upgrade your OS from ${os_version} to" \
         "at least ${MINIMAL_SUPPORTED_VERSION} and try again"
         exit 1
     fi
-    if [[ "${os_version:2:3}" -gt "${alma_version:2:3}" ]]; then
+    if [[ "${os_version:2:3}" -gt "${circle_version:2:3}" ]]; then
         report_step_error "Version of you OS ${os_version} is not supported yet"
         exit 1
     fi
@@ -467,25 +485,26 @@ remove_not_needed_redhat_dirs() {
 }
 
 
-# Install package almalinux-release
-install_almalinux_release_package() {
-    if get_status_of_stage "install_almalinux_release_package"; then
+# Install package circle-linux-release
+install_circlelinux_release_package() {
+    if get_status_of_stage "install_circlelinux_release_package"; then
         return 0
     fi
     local -r release_path="${1}"
-    rpm -Uvh "${release_path}"
-    report_step_done 'Install almalinux-release package'
-    save_status_of_stage "install_almalinux_release_package"
+    local -r repos_path="${2}"
+    rpm -ivh --nodeps --force "${release_path}" "${repos_path}" https://mirror.cclinux.org/pub/circle/8/BaseOS/x86_64/os/Packages/circle-gpg-keys-8-7.el8.noarch.rpm
+    report_step_done 'Install circle-linux-release circle-linux-repos package'
+    save_status_of_stage "install_circlelinux_release_package"
 }
 
 
-# Remove brand packages and install the same AlmaLinux packages
+# Remove brand packages and install the same CircleLinux packages
 replace_brand_packages() {
     if get_status_of_stage "replace_brand_packages"; then
         return 0
     fi
-    local alma_pkgs=()
-    local alma_pkg
+    local circle_pkgs=()
+    local circle_pkg
     local output
     local pkg_name
     # replace GUI packages
@@ -495,14 +514,14 @@ replace_brand_packages() {
             # shellcheck disable=SC2001
             case "${pkg_name}" in
                 oracle-epel-release-el8)
-                    alma_pkg="epel-release"
+                    circle_pkg="epel-release"
                     ;;
                 *)
                     # shellcheck disable=SC2001
-                    alma_pkg="$(echo "${pkg_name}" | sed 's#centos\|oracle\|redhat\|rocky#almalinux#')"
+                    circle_pkg="$(echo "${pkg_name}" | sed 's#centos\|oracle\|redhat\|almalinux\|rocky#circle#')"
                     ;;
             esac
-            alma_pkgs+=("${alma_pkg}")
+            circle_pkgs+=("${circle_pkg}")
         else
             unset "BRANDING_PKGS[i]"
         fi
@@ -511,29 +530,29 @@ replace_brand_packages() {
         rpm -e --nodeps --allmatches "${BRANDING_PKGS[@]}"
         report_step_done "Remove ${BRANDING_PKGS[*]} packages"
     fi
-    if [[ "${#alma_pkgs[@]}" -ne 0 ]]; then
-        if ! output=$(dnf install -y "${alma_pkgs[@]}" 2>&1); then
-            report_step_error "Install ${alma_pkgs[*]} packages" "${output}"
+    if [[ "${#circle_pkgs[@]}" -ne 0 ]]; then
+        if ! output=$(dnf install -y "${circle_pkgs[@]}" 2>&1); then
+            report_step_error "Install ${circle_pkgs[*]} packages" "${output}"
         fi
-        report_step_done "Install ${alma_pkgs[*]} packages"
+        report_step_done "Install ${circle_pkgs[*]} packages"
     fi
     save_status_of_stage "replace_brand_packages"
 }
 
 
-# Converts a CentOS like system to AlmaLinux
+# Converts a CentOS like system to CircleLinux
 #
-# $1 - almalinux-release RPM package path.
+# $1 - circle-linux-release RPM package path.
 migrate_from_centos() {
     if get_status_of_stage "migrate_from_centos"; then
         return 0
     fi
     local -r release_path="${1}"
-    # replace OS packages with almalinux-release
+    # replace OS packages with circle-linux-release
     # and OS centos-specific packages
     remove_os_specific_packages_before_migration
     remove_not_needed_redhat_dirs
-    install_almalinux_release_package "${release_path}"
+    install_circlelinux_release_package "${release_path}" "${repos_path}" 
     replace_brand_packages
     save_status_of_stage "migrate_from_centos"
 }
@@ -615,9 +634,9 @@ install_kernel() {
     fi
     if ! output=$(rpm -q kernel 2>&1); then
         if output=$(dnf -y install kernel 2>&1); then
-            report_step_done "Install AlmaLinux kernel"
+            report_step_done "Install CircleLinux kernel"
         else
-            report_step_error "Install AlmaLinux kernel"
+            report_step_error "Install CircleLinux kernel"
         fi
     fi
     save_status_of_stage "install_kernel"
@@ -628,8 +647,8 @@ grub_update() {
         return 0
     fi
     if [ -d /sys/firmware/efi ]; then
-        if [ -d /boot/efi/EFI/almalinux ]; then
-            grub2-mkconfig -o /boot/efi/EFI/almalinux/grub.cfg
+        if [ -d /boot/efi/EFI/circle ]; then
+            grub2-mkconfig -o /boot/efi/EFI/circle/grub.cfg
         elif [ -d /boot/efi/EFI/centos ]; then
             grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg
         else
@@ -853,21 +872,21 @@ add_efi_boot_record() {
     fi
 
     if [[ ${arch} == "x86_64" && $device == *"/dev/md"* ]]; then
-        efibootmgr -c -L "AlmaLinux" -l "\EFI\almalinux\shimx64.efi" -d "${disk_name1}" -p "${disk_num1}"
-        efibootmgr -c -L "AlmaLinux" -l "\EFI\almalinux\shimx64.efi" -d "${disk_name2}" -p "${disk_num2}"
+        efibootmgr -c -L "CircleLinux" -l "\EFI\circle\shimx64.efi" -d "${disk_name1}" -p "${disk_num1}"
+        efibootmgr -c -L "CircleLinux" -l "\EFI\circle\shimx64.efi" -d "${disk_name2}" -p "${disk_num2}"
 
     elif [[ ${arch} == "aarch64" && $device == *"/dev/md"* ]]; then
-    	  efibootmgr -c -L "AlmaLinux" -l "\EFI\almalinux\shimaa64.efi" -d "${disk_name1}" -p "${disk_num1}"
-        efibootmgr -c -L "AlmaLinux" -l "\EFI\almalinux\shimaa64.efi" -d "${disk_name2}" -p "${disk_num2}"
+    	  efibootmgr -c -L "CircleLinux" -l "\EFI\circle\shimaa64.efi" -d "${disk_name1}" -p "${disk_num1}"
+        efibootmgr -c -L "CircleLinux" -l "\EFI\circle\shimaa64.efi" -d "${disk_name2}" -p "${disk_num2}"
 
     elif [[ ${arch} == "x86_64" ]]; then
-        efibootmgr -c -L "AlmaLinux" -l "\EFI\almalinux\shimx64.efi" -d "${disk_name}" -p "${disk_num}"
+        efibootmgr -c -L "CircleLinux" -l "\EFI\circle\shimx64.efi" -d "${disk_name}" -p "${disk_num}"
 
     elif [[ ${arch} == "aarch64" ]]; then
-        efibootmgr -c -L "AlmaLinux" -l "\EFI\almalinux\shimaa64.efi" -d "${disk_name}" -p "${disk_num}"
+        efibootmgr -c -L "CircleLinux" -l "\EFI\circle\shimaa64.efi" -d "${disk_name}" -p "${disk_num}"
 
     fi
-        report_step_done "The new EFI boot record for AlmaLinux is added"
+        report_step_done "The new EFI boot record for CircleLinux is added"
         save_status_of_stage "add_efi_boot_record"
 }
 
@@ -878,15 +897,15 @@ reinstall_secure_boot_packages() {
     fi
     local kernel_package
     for pkg in $(rpm -qa | grep -E 'shim|fwupd|grub2'); do
-        if [[ "AlmaLinux" != "$(rpm -q --queryformat '%{vendor}' "$pkg")" ]]; then
+        if [[ "CircleLinux" != "$(rpm -q --queryformat '%{vendor}' "$pkg")" ]]; then
             yum reinstall "${pkg}" -y
         fi
     done
     kernel_package="$(rpm -qf "$(grubby --default-kernel)")"
-    if [[ "AlmaLinux" != "$(rpm -q --queryformat '%{vendor}' "${kernel_package}")" ]]; then
+    if [[ "CircleLinux" != "$(rpm -q --queryformat '%{vendor}' "${kernel_package}")" ]]; then
         yum reinstall "${kernel_package}" -y
     fi
-    report_step_done "All Secure Boot related packages which were not released by AlmaLinux are reinstalled"
+    report_step_done "All Secure Boot related packages which were not released by CircleLinux are reinstalled"
     save_status_of_stage "reinstall_secure_boot_packages"
 }
 
@@ -897,6 +916,7 @@ main() {
     local os_version
     local os_type
     local release_url
+    local repos_url
     local tmp_dir
     local release_path
     local panel_type
@@ -914,13 +934,16 @@ main() {
     assert_supported_panel "${panel_type}" "${panel_version}"
 
     release_url=$(get_release_file_url "${os_version}" "${arch}")
-    tmp_dir=$(mktemp -d --tmpdir="${BASE_TMP_DIR}" .alma.XXXXXX)
+    repos_url=$(get_repos_file_url "${os_version}" "${arch}")
+    tmp_dir=$(mktemp -d --tmpdir="${BASE_TMP_DIR}" .circle.XXXXXX)
     # shellcheck disable=SC2064
     trap "cleanup_tmp_dir ${tmp_dir}" EXIT
     install_rpm_pubkey "${tmp_dir}"
 
     release_path=$(download_release_file "${release_url}" "${tmp_dir}")
-    report_step_done 'Download almalinux-release package'
+    report_step_done 'Download circle-linux-release package'
+    repos_path=$(download_repos_file "${repos_url}" "${tmp_dir}")
+    report_step_done 'Download circle-linux-repos package'
     if mount | grep -q fuse.lxcfs ||
         env | grep -q 'container=lxc' ||
         awk '{print $1}' /proc/vz/veinfo 2>/dev/null ||
@@ -930,9 +953,11 @@ main() {
 
     assert_valid_package "${release_path}"
     assert_compatible_os_version "${os_version}" "${release_path}"
+    assert_valid_package "${repos_path}"
+    assert_compatible_os_version "${os_version}" "${repos_path}"
 
     case "${os_type}" in
-    almalinux|centos|ol|rhel|rocky)
+    almalinux|centos|ol|rhel|rocky|circle)
         backup_issue
         migrate_from_centos "${release_path}"
         ;;
@@ -957,7 +982,7 @@ main() {
     fi
     check_custom_kernel
     save_status_of_stage "completed"
-    printf '\n\033[0;32mMigration to AlmaLinux is completed\033[0m\n'
+    printf '\n\033[0;32mMigration to CircleLinux is completed\033[0m\n'
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

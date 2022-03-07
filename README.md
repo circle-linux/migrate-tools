@@ -1,14 +1,14 @@
-# almalinux-deploy
+# circlelinux-deploy
 
-An EL to AlmaLinux migration tool.
+An EL to CircleLinux migration tool.
 
 
 ## Usage
 
-In order to convert your EL8 operating system to AlmaLinux do the following:
+In order to convert your EL8 operating system to CircleLinux do the following:
 
-1. CentOS 8.4 or 8.5 is required to convert to AlmaLinux.  It is recommended to update to 8.5 prior to moving to
-AlmaLinux but not required if you are on at least CentOS 8.4.  Rebooting after the updates is recommended if your system
+1. CentOS 8.4 or 8.5 is required to convert to CircleLinux.  It is recommended to update to 8.5 prior to moving to
+CircleLinux but not required if you are on at least CentOS 8.4.  Rebooting after the updates is recommended if your system
 received new updates.
 
     ```
@@ -18,7 +18,7 @@ received new updates.
 
   - As of January 31, 2022 the CentOS 8 mirrorlists are offline.  In order to successfully perform `dnf update -y`
 you need to update your `dnf` config files to point to a valid mirror.  You can use the following `sed` commands for
-convenience to restore `dnf` to a functional state that will let you update to 8.5 and subsequently AlmaLinux.
+convenience to restore `dnf` to a functional state that will let you update to 8.5 and subsequently CircleLinux.
     - ```bash
       sudo sed -i -e '/mirrorlist=http:\/\/mirrorlist.centos.org\/?release=$releasever&arch=$basearch&repo=/ s/^#*/#/' -e '/baseurl=http:\/\/mirror.centos.org\/$contentdir\/$releasever\// s/^#*/#/' -e '/^\[baseos\]/a baseurl=https://mirror.rackspace.com/centos-vault/8.5.2111/BaseOS/$basearch/os' /etc/yum.repos.d/CentOS-Linux-BaseOS.repo
       sudo sed -i -e '/mirrorlist=http:\/\/mirrorlist.centos.org\/?release=$releasever&arch=$basearch&repo=/ s/^#*/#/' -e '/baseurl=http:\/\/mirror.centos.org\/$contentdir\/$releasever\// s/^#*/#/' -e '/^\[appstream\]/a baseurl=https://mirror.rackspace.com/centos-vault/8.5.2111/AppStream/$basearch/os' /etc/yum.repos.d/CentOS-Linux-AppStream.repo
@@ -30,26 +30,26 @@ convenience to restore `dnf` to a functional state that will let you update to 8
       sudo sed -i -e '/mirrorlist=http:\/\/mirrorlist.centos.org\/?release=$releasever&arch=$basearch&repo=/ s/^#*/#/' -e '/baseurl=http:\/\/mirror.centos.org\/$contentdir\/$releasever\// s/^#*/#/' -e '/^\[plus\]/a baseurl=https://mirror.rackspace.com/centos-vault/8.5.2111/centosplus/$basearch/os' /etc/yum.repos.d/CentOS-Linux-Plus.repo
       sudo sed -i -e '/mirrorlist=http:\/\/mirrorlist.centos.org\/?release=$releasever&arch=$basearch&repo=/ s/^#*/#/' -e '/baseurl=http:\/\/mirror.centos.org\/$contentdir\/$releasever\// s/^#*/#/' -e '/^\[powertools\]/a baseurl=https://mirror.rackspace.com/centos-vault/8.5.2111/PowerTools/$basearch/os' /etc/yum.repos.d/CentOS-Linux-PowerTools.repo
       ```
-    - You can use the `-f` flag (ie `sudo bash almalinux-deploy.sh -f`) to handle this for you. 
+    - You can use the `-f` flag (ie `sudo bash circlelinux-deploy.sh -f`) to handle this for you. 
 2. Back up of the system. We didn't test all possible scenarios so there
    is a risk that something goes wrong. In such a situation you will have a
    restore point.
 
-3. Download the [almalinux-deploy.sh](almalinux-deploy.sh) script:
+3. Download the [circlelinux-deploy.sh](circlelinux-deploy.sh) script:
 
    ```shell
-   $ curl -O https://raw.githubusercontent.com/AlmaLinux/almalinux-deploy/master/almalinux-deploy.sh
+   $ curl -O https://raw.githubusercontent.com/CircleLinux/circlelinux-deploy/master/circlelinux-deploy.sh
    ```
 
 4. Run the script and check its output for errors:
 
    ```shell
-   $ sudo bash almalinux-deploy.sh
+   $ sudo bash circlelinux-deploy.sh
      ...
-     Migration to AlmaLinux is completed
+     Migration to CircleLinux is completed
    ```
 
-5. Reboot is recommended to boot with AlmaLinux kernel:
+5. Reboot is recommended to boot with CircleLinux kernel:
 
     ```
     sudo reboot
@@ -60,14 +60,14 @@ convenience to restore `dnf` to a functional state that will let you update to 8
    ```shell
    # check release file
    $ cat /etc/redhat-release
-   AlmaLinux release 8.5 (Arctic Sphynx)
+   CircleLinux release 8.5 (Arctic Sphynx)
 
-   # check that the system boots AlmaLinux kernel by default
-   $ sudo grubby --info DEFAULT | grep AlmaLinux
-   title="AlmaLinux (4.18.0-348.el8.x86_64) 8.5 (Arctic Sphynx)"
+   # check that the system boots CircleLinux kernel by default
+   $ sudo grubby --info DEFAULT | grep CircleLinux
+   title="CircleLinux (4.18.0-348.el8.x86_64) 8.5 (Arctic Sphynx)"
    ```
 
-7. Thank you for choosing AlmaLinux!
+7. Thank you for choosing CircleLinux!
 
 
 ## Roadmap
@@ -88,10 +88,10 @@ convenience to restore `dnf` to a functional state that will let you update to 8
 
 Any contribution is welcome:
 
-* Find and [report](https://github.com/AlmaLinux/almalinux-deploy/issues) bugs.
+* Find and [report](https://github.com/CircleLinux/circlelinux-deploy/issues) bugs.
 * Submit pull requests with bug fixes, improvements and new tests.
 * Test it on different configurations and share your thoughts in
-  [discussions](https://github.com/AlmaLinux/almalinux-deploy/discussions).
+  [discussions](https://github.com/CircleLinux/circlelinux-deploy/discussions).
 
 Technology stack:
 

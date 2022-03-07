@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-source almalinux-deploy.sh -t
+source circlelinux-deploy.sh -t
 
 
 setup() {
@@ -94,11 +94,11 @@ teardown() {
 @test 'get_release_file_url returns default URL' {
     run get_release_file_url '8' 'x86_64'
     [[ ${status} -eq 0 ]]
-    [[ ${output} == 'https://repo.almalinux.org/almalinux/almalinux-release-latest-8.x86_64.rpm' ]]
+    [[ ${output} == 'https://mirror.cclinux.org/circle/circle-linux-release-latest-8.x86_64.rpm' ]]
 }
 
 @test 'get_release_file_url returns ALMA_RELEASE_URL environment variable' {
-    export ALMA_RELEASE_URL='https://example.com/almalinux-release-latest-8.aarch64.rpm'
+    export ALMA_RELEASE_URL='https://example.com/circle-linux-release-latest-8.aarch64.rpm'
     run get_release_file_url '8' 'aarch64'
     [[ ${status} -eq 0 ]]
     [[ ${output} == "${ALMA_RELEASE_URL}" ]]
