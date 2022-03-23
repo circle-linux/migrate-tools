@@ -313,7 +313,7 @@ install_rpm_pubkey() {
         return 0
     fi
     local -r tmp_dir="${1}"
-    local -r pubkey_url="${CIRCLE_PUBKEY_URL:-https://mirror.cclinux.org/pub/circle/8/metadata/RPM-GPG-KEY-circleofficial}"
+    local -r pubkey_url="${CIRCLE_PUBKEY_URL:-https://mirror.cclinux.org/pub/circle/8/RPM-GPG-KEY-circleofficial}"
     local -r pubkey_path="${tmp_dir}/RPM-GPG-KEY-circleofficial"
     local -r step='Download RPM-GPG-KEY-circleofficial'
     local output
